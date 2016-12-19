@@ -1,15 +1,11 @@
-import com.sun.org.apache.xml.internal.serializer.utils.StringToIntTable;
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.Graph;
-import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.graph.implementations.SingleNode;
 import org.graphstream.stream.SinkAdapter;
 import org.graphstream.stream.file.*;
 import org.graphstream.ui.swingViewer.View;
 import org.graphstream.ui.swingViewer.Viewer;
-import scala.Enumeration;
-import scala.util.parsing.combinator.testing.Str;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -56,6 +52,10 @@ public class SplayTree extends SinkAdapter {
 
         graph.addAttribute("ui.quality");
         graph.addAttribute("ui.antialias");
+    }
+
+    public Node getRoot() {
+        return root;
     }
 
     public boolean contains(Integer key) {
@@ -262,7 +262,7 @@ public class SplayTree extends SinkAdapter {
         }
 
         for (String s : list){
-            System.out.println(graph.getEdge(s));
+            //System.out.println(graph.getEdge(s));
             graph.removeEdge(s);
         }
     }
