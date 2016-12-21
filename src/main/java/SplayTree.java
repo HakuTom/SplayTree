@@ -7,6 +7,7 @@ import org.graphstream.stream.file.*;
 import org.graphstream.ui.swingViewer.View;
 import org.graphstream.ui.swingViewer.Viewer;
 
+import java.awt.*;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
@@ -42,6 +43,7 @@ public class SplayTree extends SinkAdapter {
     double Y;
     double D;
     boolean removed = false;
+    int time = 1000;
 
 
     public SplayTree() {
@@ -77,7 +79,7 @@ public class SplayTree extends SinkAdapter {
         // splay key to root
         if (root == null) {
             org.graphstream.graph.Node node = graph.addNode("null");
-            node.setAttribute("xy", X, Y - 1);
+            node.setAttribute("xy", 0, 1);
             root = new Node(key);
             setPositions();
             return;
@@ -210,6 +212,7 @@ public class SplayTree extends SinkAdapter {
         Node x = h.left;
         h.left = x.right;
         x.right = h;
+        setPositions();
         return x;
     }
 
@@ -218,6 +221,7 @@ public class SplayTree extends SinkAdapter {
         Node x = h.right;
         h.right = x.left;
         x.left = h;
+        setPositions();
         return x;
     }
 
@@ -237,17 +241,19 @@ public class SplayTree extends SinkAdapter {
     }
 
     void setPositions() {
-        setPositions(root, X, Y, 0.50000);
+        setPositions(root, 0, 0, X);
+        //System.out.println("coords" + graph.getNode(root.toString()).getAttribute("xy").toString());
+        view.setViewCenter(0, 0, 0);
         removeAllEdges();
         setEdges(true);
     }
 
     void setPositions(Node node, double x, double y, double z) {
         if (node != null) {
-            setPositions(node.left, x - (x * z), y - D,z + z*node.getDegree());
-            setPositions(node.right, X + (x - (x * z)), y - D,  z);
-
+            setPositions(node.left, (x - z), y - D, z / 2);
             graph.getNode(node.toString()).setAttribute("xy", x, y);
+            System.out.printf("x: %s y: %s\n", x, y);
+            setPositions(node.right, (x + z), y - D, z / 2);
         }
     }
 
@@ -255,13 +261,13 @@ public class SplayTree extends SinkAdapter {
         setEdges(root, flag);
     }
 
-    void removeAllEdges(){
+    void removeAllEdges() {
         List<String> list = new LinkedList<String>();
-        for (Edge edge: graph.getEachEdge()) {
+        for (Edge edge : graph.getEachEdge()) {
             list.add(edge.getId());
         }
 
-        for (String s : list){
+        for (String s : list) {
             //System.out.println(graph.getEdge(s));
             graph.removeEdge(s);
         }
@@ -279,7 +285,7 @@ public class SplayTree extends SinkAdapter {
             }
             setEdges(node.right, flag);
             a = node.toString();
-            b = node.right != null ?  node.right.toString() : null;
+            b = node.right != null ? node.right.toString() : null;
             n = a + b;
             if (b != null) {
                 graph.removeEdge(n);
@@ -289,18 +295,29 @@ public class SplayTree extends SinkAdapter {
     }
 
     public void display() {
-        Viewer viewer = graph.display(false);
+
+        Viewer viewer = new Viewer(graph, Viewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD); //graph.display(false);
         viewer.disableAutoLayout();
-        view = viewer.getDefaultView();
+        view = viewer.addDefaultView(false);
+        //view.setBounds(-1900, - 1080, 0, 1900, 1080, 0);
 
-        X = view.getWidth() / 2;
-        Y = view.getHeight() / 2;
-        D = Y * 0.5;
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        double width = screenSize.getWidth();
+        double height = screenSize.getHeight();
 
-       //view.setViewCenter(X, X, Y * 2);
-        view.setViewPercent(10);
-        view.resetView();
+        System.out.println(view.toString());
+        X = 530; //width / 2;
+        Y = 231; //height / 2;
+        D = Y * 0.7;
+
+        //view.setViewCenter(0, -200, 0);
+        view.setViewPercent(2.5);
         graph.addSink(this);
+
+        GUIForm app = new GUIForm(view);
+
+        //app.add(view);
+
     }
 
     public void save(String path) throws IOException {
@@ -323,13 +340,13 @@ public class SplayTree extends SinkAdapter {
                 System.out.println("added");
 
             }
-        } catch( IOException e) {
-	        e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         try {
             fs.end();
-        } catch( IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         } finally {
             graph.display();
@@ -337,9 +354,17 @@ public class SplayTree extends SinkAdapter {
         }
     }
 
-    @Override
+    void sleep() {
+        try {
+            Thread.sleep(time);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /*@Override
     public void nodeAdded(String sourceId, long timeId, String nodeId) {
         insert(Integer.parseInt(nodeId));
         System.out.println(nodeId);
-    }
+    }*/
 }
