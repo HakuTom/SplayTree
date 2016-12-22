@@ -37,7 +37,7 @@
           <text value="Insert"/>
         </properties>
       </component>
-      <component id="e663c" class="javax.swing.JTextField" binding="textField2" default-binding="true">
+      <component id="e663c" class="javax.swing.JTextField" binding="input">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false">
             <preferred-size width="80" height="24"/>

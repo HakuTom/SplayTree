@@ -1,5 +1,3 @@
-import java.io.IOException;
-
 /**
  * Created by dokgo on 18.12.16.
  */
@@ -16,12 +14,12 @@ public class Main {
         app.setVisible(true);*/
         tree.display();
 
-        /*Random random = new Random();
+      /*  Random random = new Random();
         for (int j = 0; j < 20; j++) {
             int i = random.nextInt(10 + 1);
             tree.insert(i);
             sleep();
-        }*/
+        }
         sleep();
         tree.insert(4);
         sleep();
@@ -43,7 +41,7 @@ public class Main {
             tree.save("/home/dokgo/Documents/graph.");
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
         /*boolean flag = true;
         while (true){
             tree.setEdges(flag);
@@ -71,7 +69,7 @@ public class Main {
 
     static void sleep() {
         try {
-            Thread.sleep(900);
+            Thread.sleep(2000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

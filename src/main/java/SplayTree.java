@@ -241,9 +241,10 @@ public class SplayTree extends SinkAdapter {
     }
 
     void setPositions() {
-        setPositions(root, 0, 0, X);
+        setPositions(root, 0, 200, X);
         //System.out.println("coords" + graph.getNode(root.toString()).getAttribute("xy").toString());
-        view.setViewCenter(0, 0, 0);
+        //view.setViewCenter(0, 0, 0);
+        System.out.println(view.getViewCenter().toString());
         removeAllEdges();
         setEdges(true);
     }
@@ -314,7 +315,7 @@ public class SplayTree extends SinkAdapter {
         view.setViewPercent(2.5);
         graph.addSink(this);
 
-        GUIForm app = new GUIForm(view);
+        GUIForm app = new GUIForm(view, this);
 
         //app.add(view);
 
