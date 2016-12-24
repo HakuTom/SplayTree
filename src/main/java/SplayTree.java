@@ -3,12 +3,14 @@ import org.graphstream.graph.Graph;
 import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.graph.implementations.SingleNode;
 import org.graphstream.stream.SinkAdapter;
-import org.graphstream.stream.file.*;
 import org.graphstream.ui.swingViewer.View;
 import org.graphstream.ui.swingViewer.Viewer;
 
 import java.awt.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -44,13 +46,17 @@ public class SplayTree extends SinkAdapter {
     double D;
     boolean removed = false;
     int time = 1000;
+/*
+    ProxyPipe pipe;
+*/
 
 
     public SplayTree() {
         graph = new SingleGraph("Tree");
-        graph.addAttribute("ui.stylesheet", "node { fill-color: green; size: 25px;} " +
+        graph.addAttribute("ui.stylesheet", "node { fill-color: green, red; size: 25px; fill-mode: dyn-plain;} " +
                 "node#null {fill-color:white;} " +
-                "node.marked {fill-color:red;}");
+                "node.marked {fill-color:red;}"
+        );
 
         graph.addAttribute("ui.quality");
         graph.addAttribute("ui.antialias");
@@ -60,10 +66,28 @@ public class SplayTree extends SinkAdapter {
         return root;
     }
 
+    public void setRoot(Node root) {
+        this.root = root;
+    }
+
     public boolean contains(Integer key) {
-        boolean res = get(key) != null;
+        Node node = get(key);
+        boolean res = node != null;
         setPositions();
         return res;
+    }
+
+    public void trav() {
+        trav(root);
+    }
+
+    public void trav(Node node) {
+        if (node != null) {
+            trav(node.left);
+            graph.getNode(node.toString()).setAttribute("ui.color", 1);
+            sleep();
+            trav(node.right);
+        }
     }
 
     // return value associated with the given key
@@ -121,7 +145,7 @@ public class SplayTree extends SinkAdapter {
     }
 
 
-    public void remove(Integer key) {
+    /*public void remove(Integer key) {
         if (root == null) return; // empty tree
 
         root = splay(root, key);
@@ -137,15 +161,116 @@ public class SplayTree extends SinkAdapter {
                 splay(root, key);
                 root.right = x;
             }
+            graph.removeNode(Integer.toString(key));
+        }
+
+        setPositions();
+        // else: it wasn't in the tree to remove
+    }*/
+
+    public boolean remove(Integer key) {
+        Node parent = root;
+        Node current = root;
+        boolean isLeftChild = false;
+        while (current.key.compareTo(key) != 0) {
+            parent = current;
+
+            if (current.key.compareTo(key) > 0) {
+                isLeftChild = true;
+                current = current.left;
+            } else {
+                isLeftChild = false;
+                current = current.right;
+            }
+            if (current == null) {
+                root = splay(root, key);
+                setPositions();
+                return false;
+            }
+        }
+        // found the node
+        //node has no children
+        if (current.left == null && current.right == null) {
+            if (current == root) {
+                root = null;
+            }
+            if (isLeftChild) {
+                parent.left = null;
+            } else {
+                parent.right = null;
+            }
+            root = splay(root, parent.key);
+        }
+        // has only one child
+        else if (current.right == null) {
+            if (current == root) {
+                root = current.left;
+            } else if (isLeftChild) {
+                parent.left = current.left;
+            } else {
+                parent.right = current.left;
+            }
+            root = splay(root, current.left.key);
+        } else if (current.left == null) {
+            if (current == root) {
+                root = current.right;
+            } else if (isLeftChild) {
+                parent.left = current.right;
+            } else {
+                parent.right = current.right;
+            }
+            root = splay(root, current.right.key);
+        } else {
+
+            //minimum element in the right sub tree
+            Node successor = getSuccessor(current);
+            if (current == root) {
+                root = successor;
+            } else if (isLeftChild) {
+                parent.left = successor;
+            } else {
+                parent.right = successor;
+            }
+            successor.left = current.left;
+            root = splay(root, successor.key);
         }
         graph.removeNode(Integer.toString(key));
         setPositions();
-        // else: it wasn't in the tree to remove
+        return true;
+    }
+
+    private void setColor(Node node) {
+        //graph.getNode(node.toString()).addAttribute("ui.class", "marked");
+        node.addAttribute("ui.color", 0.5);
+        //graph.getNode(node.toString()).addAttribute("ui.color", 1);
+        org.graphstream.graph.Node node1 = graph.addNode("null");
+        node1.setAttribute("xy", 0, 23);
+//        pipe.pump();
+        sleep();
+        graph.removeNode("null");
+    }
+
+    private Node getSuccessor(Node deleteNode) {
+        Node sucsr = null;
+        Node sucsrParent = null;
+        Node curr = deleteNode.right;
+        while (curr != null) {
+            sucsrParent = sucsr;
+            sucsr = curr;
+            curr = curr.left;
+        }
+        if (sucsr != deleteNode.right) {
+            sucsrParent.left = sucsr.right;
+            sucsr.right = deleteNode.right;
+        }
+        return sucsr;
     }
 
     //h is a local root
-    private Node splay(Node h, Integer key) {
+    public Node splay(Node h, Integer key) { //TODO: return to private
         if (h == null) return null;
+//        org.graphstream.graph.Node node = graph.getNode(h.toString());
+
 
         int cmp1 = key.compareTo(h.key);
 
@@ -164,8 +289,12 @@ public class SplayTree extends SinkAdapter {
                     h.left = rotateLeft(h.left);
             }
 
-            if (h.left == null) return h;
-            else return rotateRight(h);
+            if (h.left == null) {
+                return h;
+            } else {
+                return rotateRight(h);
+            }
+
         } else if (cmp1 > 0) {
             // key not in tree, so we're done
             if (h.right == null) {
@@ -175,16 +304,23 @@ public class SplayTree extends SinkAdapter {
             int cmp2 = key.compareTo(h.right.key);
             if (cmp2 < 0) {
                 h.right.left = splay(h.right.left, key);
-                if (h.right.left != null)
+                if (h.right.left != null) {
                     h.right = rotateRight(h.right);
+                }
             } else if (cmp2 > 0) {
                 h.right.right = splay(h.right.right, key);
                 h = rotateLeft(h);
             }
 
-            if (h.right == null) return h;
-            else return rotateLeft(h);
-        } else return h;
+            if (h.right == null) {
+                return h;
+            } else {
+                return rotateLeft(h);
+            }
+
+        } else {
+            return h;
+        }
     }
 
     // height of tree (1-node tree has height 0)
@@ -232,6 +368,11 @@ public class SplayTree extends SinkAdapter {
         return s;
     }
 
+    public void clear() {
+        graph.clear();
+        root = null;
+    }
+
     public void add(Node root) {
         if (root != null) {
             add(root.left);
@@ -244,7 +385,16 @@ public class SplayTree extends SinkAdapter {
         setPositions(root, 0, 200, X);
         //System.out.println("coords" + graph.getNode(root.toString()).getAttribute("xy").toString());
         //view.setViewCenter(0, 0, 0);
-        System.out.println(view.getViewCenter().toString());
+
+        removeAllEdges();
+        setEdges(true);
+    }
+
+    void setPositions(Node root) {
+        setPositions(root, 0, 200, X);
+        //System.out.println("coords" + graph.getNode(root.toString()).getAttribute("xy").toString());
+        //view.setViewCenter(0, 0, 0);
+
         removeAllEdges();
         setEdges(true);
     }
@@ -253,7 +403,7 @@ public class SplayTree extends SinkAdapter {
         if (node != null) {
             setPositions(node.left, (x - z), y - D, z / 2);
             graph.getNode(node.toString()).setAttribute("xy", x, y);
-            System.out.printf("x: %s y: %s\n", x, y);
+            //System.out.printf("x: %s y: %s\n", x, y);
             setPositions(node.right, (x + z), y - D, z / 2);
         }
     }
@@ -276,7 +426,7 @@ public class SplayTree extends SinkAdapter {
 
     void setEdges(Node node, boolean flag) {
         if (node != null) {
-            setEdges(node.left, flag);
+            setEdges(node.left, !flag);
             String a = node.toString();
             String b = node.left != null ? node.left.toString() : null;
             String n = a + b;
@@ -284,7 +434,7 @@ public class SplayTree extends SinkAdapter {
                 graph.removeEdge(n);
                 graph.addEdge(n, a, b);
             }
-            setEdges(node.right, flag);
+            setEdges(node.right, !flag);
             a = node.toString();
             b = node.right != null ? node.right.toString() : null;
             n = a + b;
@@ -313,45 +463,55 @@ public class SplayTree extends SinkAdapter {
 
         //view.setViewCenter(0, -200, 0);
         view.setViewPercent(2.5);
+        /*pipe = viewer.newViewerPipe();*/
         graph.addSink(this);
+/*
+        pipe.addAttributeSink(graph);
+*/
 
         GUIForm app = new GUIForm(view, this);
 
-        //app.add(view);
-
     }
 
-    public void save(String path) throws IOException {
-        FileSinkDGS fg = new FileSinkDGS();
-        FileSinkDOT fs = new FileSinkDOT();
-        FileSinkGML fl = new FileSinkGML();
-        fs.writeAll(graph, path + "dot");
-        fg.writeAll(graph, path + "dgs");
-        fl.writeAll(graph, path + "gml");
-    }
-
-    public void read(Graph graph, String path) throws IOException {
-        FileSource fs = new FileSourceDGS();
-        fs.addSink(graph);
+    public void readFromFile(String path) {
+        BufferedReader reader = null;
 
         try {
-            fs.begin(path);
-
-            while (fs.nextEvents()) {
-                System.out.println("added");
-
+            reader = new BufferedReader(new FileReader(path));
+            String line = reader.readLine();
+            while (line != null && !line.equals("stop")) {
+                String[] op = line.split(":");
+                int k = Integer.parseInt(op[1]);
+                if (op[0].equals("insert")) {
+                    insert(k);
+                } else if (op[0].equals("delete")) {
+                    remove(k);
+                } else if (op[0].equals("find")) {
+                    contains(k);
+                }
+                line = reader.readLine();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        } finally {
+            if (reader != null)
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
         }
+    }
 
+    public void writeToFile(String path) {
+        PrintWriter file = null;
         try {
-            fs.end();
+            file = new PrintWriter(path, "UTF-8");
+            file.println(this);
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            graph.display();
-            fs.removeSink(graph);
+            file.close();
         }
     }
 

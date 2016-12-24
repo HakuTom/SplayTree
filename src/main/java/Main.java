@@ -5,74 +5,18 @@ public class Main {
     public static void main(String[] args) {
         System.setProperty("gs.ui.renderer", "org.graphstream.ui.j2dviewer.J2DGraphRenderer");
         SplayTree tree = new SplayTree();
-        /*try {
-            tree.read(tree.graph, "/home/dokgo/Documents/graph.dgs");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
-       /* GUI app = new GUI();
-        app.setVisible(true);*/
-        tree.display();
+        if (args.length == 3 && args[0].equals("console")) {
+            String in = args[1];
+            String out = args[2];
 
-      /*  Random random = new Random();
-        for (int j = 0; j < 20; j++) {
-            int i = random.nextInt(10 + 1);
-            tree.insert(i);
-            sleep();
-        }
-        sleep();
-        tree.insert(4);
-        sleep();
-        tree.insert(5);
-        sleep();
-        tree.insert(2);
-        sleep();
-        tree.insert(0);
-        sleep();
-        tree.insert(3);
-        sleep();
-        tree.contains(4);
-        System.out.println(tree);
-        sleep();
-        tree.insert(87);
-        sleep();
-        tree.contains(4);
-        try {
-            tree.save("/home/dokgo/Documents/graph.");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
-        /*boolean flag = true;
-        while (true){
-            tree.setEdges(flag);
-            flag = !flag;
-        }*/
+            tree.readFromFile(in);
+            tree.writeToFile(out);
 
-      /*  Graph g = new SingleGraph("d");
+            System.out.printf("file %s created\n    ", out);
 
-        // Creation of the graph
-
-        ApparitionAlgorithm da = new ApparitionAlgorithm() ;
-
-        da.init(g);
-        g.display();
-
-        int i = 9;
-        while( i > 0 ){
-            g.addNode(Integer.toString(i));
-            i--;
-            sleep();
-        }*/
-
+        } else tree.display();
 
     }
 
-    static void sleep() {
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
 }
 
